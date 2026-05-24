@@ -1,0 +1,23 @@
+# Build and temporary directories
+bin
+dist
+build
+target
+tmp
+
+# IntelliJ IDEA
+.idea
+*.iml
+
+# Symlink to the latest completed build
+result
+
+# <DevEnv>
+# https://devenv.sh/
+.devenv*
+.direnv
+.pre-commit-config.yaml
+devenv.local.nix
+# </DevEnv>
+
+# eof
