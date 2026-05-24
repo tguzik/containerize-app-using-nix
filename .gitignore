@@ -1,4 +1,5 @@
 # Build and temporary directories
+.task/
 bin
 dist
 build

@@ -9,10 +9,25 @@ vars:
   DEBUG: false
 
 tasks:
-  default:
-    silent: true
-    cmd: |
-      echo "List all available tests with:"
-      echo "[$] task --list-all"
+  all:
+    desc: "Run the whole recipe workflow"
+    cmds:
+      - task: build-sample-app
+
+  clean:
+    desc: Clean up artifacts
+    cmds:
+      - cmd: git clean -fdx target/
+
+  build-sample-app:
+    desc: Build the sample application
+    sources:
+      - "src/app/*.c"
+    generates:
+      - "target/app/app.bin"
+    cmds:
+      - cmd: mkdir -p target/app/
+      - cmd: gcc -Wall -Werror  -ldl  -o target/app/app.bin  src/app/fake-app.c
+      - cmd: ./target/app/app.bin
 
 # eof

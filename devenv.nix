@@ -42,7 +42,8 @@
     shellcheck.enable = true;
     statix.enable = true;
 
-    # Format non-nix files
+    # Additional formatters
+    clang-format.enable = true;
     markdownlint = {
       enable = true;
       settings.configuration = {
@@ -65,7 +66,8 @@
   };
 
   enterShell = ''
-    # Do nothing
+    export LD_LIBRARY_PATH="${pkgs.libaio}/lib/;$LD_LIBRARY_PATH"
+    echo "Setting LD_LIBRARY_PATH to '$LD_LIBRARY_PATH'"
   '';
 
   enterTest = ''
