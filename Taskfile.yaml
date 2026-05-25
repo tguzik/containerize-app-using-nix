@@ -12,6 +12,7 @@ tasks:
   all:
     desc: "Run the whole recipe workflow"
     cmds:
+      - cmd: mkdir -p target/
       - task: build-sample-app
 
   clean:
@@ -22,12 +23,11 @@ tasks:
   build-sample-app:
     desc: Build the sample application
     sources:
-      - "src/app/*.c"
+      - "src/*.c"
     generates:
-      - "target/app/app.bin"
+      - "target/app.bin"
     cmds:
-      - cmd: mkdir -p target/app/
-      - cmd: gcc -Wall -Werror  -ldl  -o target/app/app.bin  src/app/fake-app.c
-      - cmd: ./target/app/app.bin
+      - cmd: gcc -Wall -Werror  -ldl  -o target/app.bin  src/fake-app.c
+      - cmd: ./target/app.bin
 
 # eof
