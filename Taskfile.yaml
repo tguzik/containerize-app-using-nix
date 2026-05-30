@@ -7,6 +7,15 @@ version: "3"
 
 vars:
   DEBUG: false
+  NIX_BUILD_FLAGS: |-
+    {{if .DEBUG}}--verbose{{end}}
+  APP_BINARY_NAME: app.bin
+  APP_CONTAINER_NAME: "container-with-our-super-secret-application"
+  APP_VERSION:
+    # Make the version unique in each run, just to make sure we to rebuild the derivation upon each invocation of
+    # the task in question. This makes writing this recipe much easier, but in the end is not strictly required.
+    sh: |
+      echo "1.0-$(date --utc +'%Y%m%d-%H%M%S')-$(git rev-parse --short HEAD)"
 
 tasks:
   all:
@@ -14,6 +23,10 @@ tasks:
     cmds:
       - cmd: mkdir -p target/
       - task: build-sample-app
+      - task: copy-files-to-target-directory
+      - task: build-regular-derivation
+      - task: build-container-derivation
+      - cmd: echo Workflow completed.
 
   clean:
     desc: Clean up artifacts
@@ -25,9 +38,59 @@ tasks:
     sources:
       - "src/*.c"
     generates:
-      - "target/app.bin"
+      - target/{{ .APP_BINARY_NAME }}
     cmds:
-      - cmd: gcc -Wall -Werror  -ldl  -o target/app.bin  src/fake-app.c
-      - cmd: ./target/app.bin
+      - cmd: gcc -Wall -Werror  -ldl  -o target/{{ .APP_BINARY_NAME | shellQuote }}  src/fake-app.c
+      - silent: true
+        cmd: |
+          echo "The just-compiled binary is statically linked to:"
+          ldd target/{{ .APP_BINARY_NAME | shellQuote }}
+
+      - cmd: ./target/{{ .APP_BINARY_NAME | shellQuote }}
+
+  copy-files-to-target-directory:
+    desc: Copies binary files to the same directory, for convenience
+    cmds:
+      - cmd: cp  src/*.nix  target/
+
+  build-regular-derivation:
+    # Technically this step can be skipped - we could jump straight to building the container, however it allows us to
+    # test out the derivation build before building the container, isolating problematic stage.
+    desc: Uses Nix to package the application into a regular derivation, without producing a container yet.
+    vars:
+      LOCAL_NIX_BUILD_FLAGS: >-
+        --argstr ourBinary {{.APP_BINARY_NAME | shellQuote}}
+        {{.NIX_BUILD_FLAGS}}
+      OUT_LINK_NAME: "regular-derivation-result"
+      BINARY_IN_DERIVATION: "{{ .OUT_LINK_NAME | shellQuote }}/bin/{{ .APP_BINARY_NAME | shellQuote }}"
+    dir: target/
+    cmds:
+      - cmd: nix-build  {{ .LOCAL_NIX_BUILD_FLAGS }}  fake-app-package.nix  --out-link {{ .OUT_LINK_NAME | shellQuote }}
+      - silent: true
+        cmd: |
+          echo " ---- "
+          echo "The binary in Nix derivation, after elf patch hooks, is statically linked to:"
+          ldd ./{{ .BINARY_IN_DERIVATION | shellQuote }}
+          echo " ---- "
+          echo "Running it results in:"
+          ./{{ .BINARY_IN_DERIVATION | shellQuote }}
+          echo " ---- "
+
+  build-container-derivation:
+    desc: Use Nix to build a container with the derivation we just built.
+    vars:
+      LOCAL_NIX_BUILD_FLAGS: >-
+        --argstr ourBinary {{.APP_BINARY_NAME | shellQuote}}
+        --argstr ourImageName {{.APP_CONTAINER_NAME | shellQuote}}
+        --argstr ourImageVersion {{.APP_VERSION | shellQuote}}
+        {{.NIX_BUILD_FLAGS}}
+      OUT_LINK_NAME: "container-image.tar.gz"
+    dir: target/
+    cmds:
+      - cmd: nix-build  {{ .LOCAL_NIX_BUILD_FLAGS }}  containerize-app-package.nix  --out-link {{ .OUT_LINK_NAME | shellQuote }}
+      - cmd: podman load --input {{ .OUT_LINK_NAME | shellQuote }}
+      - defer: podman image rm  {{.APP_CONTAINER_NAME | shellQuote}}:{{.APP_VERSION | shellQuote}}
+      - cmd: podman images  {{.APP_CONTAINER_NAME | shellQuote}}
+      - cmd: podman run -it --rm  {{.APP_CONTAINER_NAME | shellQuote}}:{{.APP_VERSION | shellQuote}}
 
 # eof
