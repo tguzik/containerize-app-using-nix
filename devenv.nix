@@ -21,7 +21,7 @@
     gnupg
 
     # Tooling for the recipe itself
-    podman # https://podman.io/ # Program for managing pods, containers and container images
+    #podman # https://podman.io/ # Program for managing pods, containers and container images
 
     # Tooling to for the compilation of the simulated native application
     gcc # https://gcc.gnu.org/ # GNU Compiler Collection
