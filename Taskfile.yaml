@@ -19,7 +19,12 @@ vars:
 
 tasks:
   all:
-    desc: "Run the whole recipe workflow"
+    desc: Run the whole recipe workflow
+    cmds:
+      - task: ci
+
+  ci:
+    desc: Task used as the CI workflow entry point.
     cmds:
       - cmd: mkdir -p target/
       - task: build-sample-app

@@ -43,9 +43,9 @@ jobs:
         run: |
           devenv test
 
-      - name: Build, run tests, run static analysis
-        shell: devenv shell bash -- -e {0}
+      - name: Run tasks
+        shell: devenv --profile github-actions shell bash -- -e {0}
         run: |
-          task clean all
+          task ci
 
 # eof
