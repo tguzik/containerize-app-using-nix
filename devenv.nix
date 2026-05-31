@@ -42,6 +42,10 @@
     shellcheck.enable = true;
     statix.enable = true;
 
+    # Keep Github Actions nice and tidy
+    actionlint.enable = true;
+    zizmor.enable = true;
+
     # Additional formatters
     clang-format.enable = true;
     markdownlint = {
