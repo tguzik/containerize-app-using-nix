@@ -34,8 +34,8 @@ pkgs.dockerTools.buildLayeredImage {
   # Run the container under given uid/gid, to comply with the best practice not to run processes in the container
   # namespace as the fake root user. The specific values do not matter very much - these are far enough from the
   # default user (usually 1000/1000) to avoid issues.
-  uid = 2137;
-  gid = 2137;
+  #  uid = 2137;
+  #  gid = 2137;
 
   # Section describing the contents of the image. Directories and things that coerce to directories (e.g. derivations)
   # are allowed here, but prefer to sticking to just derivations.
