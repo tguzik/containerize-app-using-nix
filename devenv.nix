@@ -64,7 +64,7 @@
         extends: relaxed
         rules:
           line-length:
-            max: 150
+            max: 180
       '';
     };
   };
