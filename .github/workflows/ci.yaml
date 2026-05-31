@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  workflow_dispatch:  # No additional yaml keys are necessary
+  pull_request:  # No additional yaml keys are necessary
+  push:
+    branches:
+      - "main"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-using-devenv:
+    name: CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # https://github.com/actions/checkout/releases/tag/v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # https://github.com/cachix/install-nix-action/releases/tag/v31.10.6
+        with:
+          nix_path: nixpkgs=channel:nixos-26.05
+
+      - name: Print nixpkgs version
+        run: |
+          nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version'
+
+      - name: Install DevEnv
+        env:
+          LOCAL_DEVENV_REVISION: ea3d94ac9d6bf6a1313773170122ca4e2ef5a0be # https://github.com/cachix/devenv/releases/tag/v2.1.2
+        run: |
+          nix profile add "github:cachix/devenv/${LOCAL_DEVENV_REVISION}" --accept-flake-config --option extra-substituters "https://devenv.cachix.org?trusted=true&priority=3"
+
+      - name: Run devenv test
+        run: |
+          devenv test
+
+      - name: Run tasks
+        shell: devenv --profile github-actions shell bash -- -e {0}
+        run: |
+          task ci
+
+# eof

@@ -20,15 +20,28 @@
     go-task
     gnupg
 
-    # Tooling for the recipe itself
-    podman # https://podman.io/ # Program for managing pods, containers and container images
-
     # Tooling to for the compilation of the simulated native application
     gcc # https://gcc.gnu.org/ # GNU Compiler Collection
 
     # Simulated dynamically-loaded library
     libaio # LGPL # https://lse.sourceforge.net/io/aio.html # Library for asynchronous I/O in Linux
   ];
+
+  profiles = {
+    local.module =
+      { pkgs, ... }:
+      {
+        # GitHub Actions blocks podman fetched through Nix from running any containers, but does not block the podman
+        # shipped with the `ubuntu-latest` runner itself. We still want to ensure we have podman available, so we are
+        # fetching it only for local development.
+        packages = [
+          pkgs.podman # https://podman.io/ # Program for managing pods, containers and container images
+        ];
+      };
+    github-actions.module = {
+      # No changes versus the default. This profile is defined to make the differences in configuration stand out.
+    };
+  };
 
   git-hooks.hooks = {
     # Basics
@@ -41,6 +54,10 @@
     nixfmt.enable = true;
     shellcheck.enable = true;
     statix.enable = true;
+
+    # Keep Github Actions nice and tidy
+    actionlint.enable = true;
+    zizmor.enable = true;
 
     # Additional formatters
     clang-format.enable = true;
@@ -60,12 +77,14 @@
         extends: relaxed
         rules:
           line-length:
-            max: 150
+            max: 180
       '';
     };
   };
 
   enterShell = ''
+    # Add libaio to the search path to let us run the simulated native application right after compilation, as a
+    # sanity check.
     export LD_LIBRARY_PATH="${pkgs.libaio}/lib/;$LD_LIBRARY_PATH"
     echo "Setting LD_LIBRARY_PATH to '$LD_LIBRARY_PATH'"
   '';
