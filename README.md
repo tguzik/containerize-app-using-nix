@@ -21,6 +21,20 @@ TBD
 
 TBD
 
+## Running produced container image
+
+The produced container image can be ran in the usual way:
+
+```shell
+[$] podman run -it --rm  container-with-our-super-secret-application:${version}
+```
+
+The container has `bash` shell at a predictable path, so you can shell into the container by running:
+
+```shell
+[$] podman run -it --rm --entrypoint=/bin/bash  container-with-our-super-secret-application:${version}
+```
+
 ## Compatibility with public GitHub Actions runners
 
 This method is compatible with (runs under) public GitHub Actions runners, however there are some caveats:
