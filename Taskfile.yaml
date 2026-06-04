@@ -76,20 +76,14 @@ tasks:
     deps:
       - app:build
     cmds:
+      - task: print-elf-info
+        vars:
+          ELF_BINARY: "target/build/{{ .APP_BINARY_NAME }}"
+
       - silent: true
-        cmd: |
-          echo "The just-compiled binary is statically linked to:"
-          ldd target/build/{{ .APP_BINARY_NAME | shellQuote }}
-          echo
-          echo " ---- "
-          echo "The just-compiled binary has has following contents in its dynamic section (rpath etc.):"
-          readelf --lint --dynamic  target/build/{{ .APP_BINARY_NAME | shellQuote }}
-          echo " ---- "
-          echo 'Switching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
-          echo
-      - cmd: |
-          cd target/build/
-          ./{{ .APP_BINARY_NAME | shellQuote }}
+        cmd: echo -e ' ---- \nSwitching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
+
+      - cmd: cd target/build/ && ./{{ .APP_BINARY_NAME | shellQuote }}
 
   nix:copy-files:
     desc: Copy Nix files describing derivations
@@ -121,18 +115,15 @@ tasks:
       LOCAL_WRAPPER_SCRIPT: "target/{{ .DERIVATION_APP_OUT_LINK }}/bin/{{ .APP_BINARY_NAME }}-wrapper"
       LOCAL_BINARY_IN_LIBEXEC: "target/{{ .DERIVATION_APP_OUT_LINK }}/libexec/{{ .APP_BINARY_NAME }}"
     cmds:
+      - task: print-elf-info
+        vars:
+          ELF_BINARY: "{{ .LOCAL_BINARY_IN_LIBEXEC }}"
+
       - silent: true
-        cmd: |
-          echo " ---- "
-          echo "The binary in Nix derivation, after elf patch hooks, is statically linked to:"
-          ldd {{ .LOCAL_BINARY_IN_LIBEXEC | shellQuote }}
-          echo " ---- "
-          echo "Its dynamic section (rpath etc.) has following content:"
-          readelf --lint --dynamic  {{ .LOCAL_BINARY_IN_LIBEXEC | shellQuote }}
-          echo " ---- "
-          echo "Running the wrapper results in:"
+        cmd: echo -e ' ---- \nRunning the wrapper results in:'
 
       - cmd: ./{{ .LOCAL_WRAPPER_SCRIPT | shellQuote }}
+
       - silent: true
         cmd: echo " ---- "
 
@@ -158,5 +149,27 @@ tasks:
       - defer: podman image rm  {{ .CONTAINER_ID | shellQuote}}
       - cmd: podman images  {{ .APP_CONTAINER_NAME | shellQuote }}
       - cmd: podman run -it --rm  {{ .CONTAINER_ID }}
+
+  print-elf-info:
+    internal: true
+    silent: true
+    desc: Print technical details of a specified ELF binary
+    preconditions:
+      - sh: command -v ldd
+        msg: ldd command not found, ensure you are in the devenv shell.
+
+      - sh: command -v readelf
+        msg: readelf command not found, ensure you are in the devenv shell.
+
+      - sh: test -f {{ .ELF_BINARY | shellQuote }}
+        msg: The ELF binary at '{{ .ELF_BINARY }}' does not exist.
+    cmds:
+      - cmd: |
+          echo "Binary: {{ .ELF_BINARY }}"
+          echo "Static linking information:"
+          ldd {{ .ELF_BINARY | shellQuote }}
+          echo
+          echo "Dynamic section:"
+          readelf --lint --dynamic  {{ .ELF_BINARY | shellQuote }}
 
 # eof
