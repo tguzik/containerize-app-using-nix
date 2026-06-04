@@ -10,9 +10,13 @@
 #include <unistd.h>
 
 // Define aliases for functions that we will find in the library dynamically, at
-// runtime
+// runtime.
 typedef int (*io_queue_init_t)(int, void **);
 typedef int (*io_queue_release_t)(void **);
+
+// Define constants used below
+const char *CONFIG_FILE = "fake-config-file.conf";
+const char *LIBAIO_SO_NAME = "libaio.so";
 
 void printBasicApplicationInformation() {
   const size_t pathSize = PATH_MAX;
@@ -40,9 +44,33 @@ void printBasicApplicationInformation() {
     exit(1);
   }
 
-  printf("App binary is at:   %s\n", pathBuf);
+  printf("App binary is at:   %s\n\n", pathBuf);
 
   free(pathBuf);
+}
+
+void readFakeConfiguration() {
+  printf("Trying to read fake configuration file from '%s'...\n", CONFIG_FILE);
+
+  FILE *fp = fopen(CONFIG_FILE, "r");
+  if (!fp) {
+    perror("fopen()");
+    exit(EXIT_FAILURE);
+  }
+
+  printf("File opened - its contents are:\n ----\n");
+
+  char buf[1024];
+  while (fgets(buf, sizeof(buf), fp) != NULL) {
+    printf("%s\n", buf);
+  }
+
+  printf(" ----\n\n");
+
+  if (fclose(fp)) {
+    perror("fclose()");
+    exit(EXIT_FAILURE);
+  }
 }
 
 void useDynamicallyLinkedLibrary() {
@@ -51,7 +79,7 @@ void useDynamicallyLinkedLibrary() {
   char *error;
 
   // Open the shared library
-  void *dynamicLibraryHandle = dlopen("libaio.so", RTLD_LAZY);
+  void *dynamicLibraryHandle = dlopen(LIBAIO_SO_NAME, RTLD_LAZY);
   if (!dynamicLibraryHandle) {
     fprintf(stderr, "Error opening libaio: %s\n", dlerror());
     exit(EXIT_FAILURE);
@@ -94,7 +122,7 @@ void useDynamicallyLinkedLibrary() {
 
   result = aio_queue_release(aioCtx);
   if (result == 0) {
-    printf("Success: io_queue_release() returned 0. Context shut down.\n");
+    printf("Success: io_queue_release() returned 0. Context shut down.\n\n");
   } else {
     fprintf(stderr, "io_queue_release() failed with error code: %d\n", result);
     dlclose(dynamicLibraryHandle);
@@ -105,9 +133,10 @@ void useDynamicallyLinkedLibrary() {
   dlclose(dynamicLibraryHandle);
 }
 
-int main(int argc, char *argv[]) {
+int main() {
   printf("Hello world!\n");
   printBasicApplicationInformation();
+  readFakeConfiguration();
   useDynamicallyLinkedLibrary();
   printf("Done! Closing down..\n");
 
