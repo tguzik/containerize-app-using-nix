@@ -11,12 +11,11 @@
 let
   # The derivation defined in the other file. We could inline the configuration into this file (yay for Nix being a
   # pure functional language), but to lower the cognitive complexity we'll just import it from the other file.
-  derivationWithApplication = import ./fake-app-package.nix {
+  derivationWithApplication = pkgs.callPackage ./fake-app-package.nix {
     inherit appVersion;
     inherit appBinary;
     inherit appConfigFile;
   };
-  # pkgs.callPackage ./fake-app-package.nix {};
 in
 # Docs: https://nixos.org/manual/nixpkgs/stable/#ssec-pkgs-dockerTools-buildImage
 # Docs: https://nixos.org/manual/nixpkgs/stable/#ssec-pkgs-dockerTools-buildLayeredImage
