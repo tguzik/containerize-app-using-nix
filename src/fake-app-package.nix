@@ -26,7 +26,7 @@ pkgs.stdenvNoCC.mkDerivation rec {
   version = appVersion;
 
   # Use current directory as the source, just for convenience
-  src = ./.;
+  src = ./build;
 
   nativeBuildInputs = with pkgs; [
     # https://nixos.org/manual/nixpkgs/stable/#setup-hook-autopatchelfhook

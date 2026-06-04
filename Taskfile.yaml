@@ -55,7 +55,7 @@ tasks:
     desc: Prepare for build
     cmds:
       - task: clean
-      - cmd: mkdir -p target/
+      - cmd: mkdir -p target/build/
 
   app:build:
     desc: Build the sample application
@@ -63,34 +63,32 @@ tasks:
       - "src/*.c"
       - "src/{{ .APP_CONFIG_FILE }}"
     generates:
-      - "target/{{ .APP_BINARY_NAME }}"
-      - "target/{{ .APP_CONFIG_FILE }}"
+      - "target/build/{{ .APP_BINARY_NAME }}"
+      - "target/build/{{ .APP_CONFIG_FILE }}"
     vars:
-      LOCAL_BINARY: "target/{{ .APP_BINARY_NAME }}"
+      LOCAL_BINARY: "target/build/{{ .APP_BINARY_NAME }}"
     cmds:
       - cmd: gcc -Wall -Wextra -Werror  -ldl  -o {{ .LOCAL_BINARY | shellQuote }}  src/fake-app.c
-      - cmd: cp  src/{{ .APP_CONFIG_FILE | shellQuote }}  target/
+      - cmd: cp  src/{{ .APP_CONFIG_FILE | shellQuote }}  target/build/
 
   app:run:
     desc: Run the fake application to test that it works
     deps:
       - app:build
-    vars:
-      LOCAL_BINARY: "target/{{ .APP_BINARY_NAME }}"
     cmds:
       - silent: true
         cmd: |
           echo "The just-compiled binary is statically linked to:"
-          ldd {{ .LOCAL_BINARY | shellQuote }}
+          ldd target/build/{{ .APP_BINARY_NAME | shellQuote }}
           echo
           echo " ---- "
           echo "The just-compiled binary has has following contents in its dynamic section (rpath etc.):"
-          readelf --lint --dynamic  {{ .LOCAL_BINARY | shellQuote }}
+          readelf --lint --dynamic  target/build/{{ .APP_BINARY_NAME | shellQuote }}
           echo " ---- "
-          echo 'Switching working directory to "target/" and running "{{ .APP_BINARY_NAME }}"...'
+          echo 'Switching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
           echo
       - cmd: |
-          cd target/
+          cd target/build/
           ./{{ .APP_BINARY_NAME | shellQuote }}
 
   nix:copy-files:
