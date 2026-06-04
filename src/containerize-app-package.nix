@@ -35,12 +35,6 @@ pkgs.dockerTools.buildLayeredImage {
   # Mark which architecture this image is for. This variable has defaults, we're just being explicit.
   architecture = "amd64";
 
-  # Run the container under given uid/gid, to comply with the best practice not to run processes in the container
-  # namespace as the fake root user. The specific values do not matter very much - these are far enough from the
-  # default user (usually 1000/1000) to avoid issues.
-  uid = 2137;
-  gid = 2137;
-
   # Section describing the contents of the image. Directories and things that coerce to directories (e.g. derivations)
   # are allowed here, but prefer to sticking to just derivations.
   contents = [
@@ -60,9 +54,9 @@ pkgs.dockerTools.buildLayeredImage {
   ];
 
   # Commands to run when building the image. These are mostly up to the specific application.
-  # In this case we're just being fancy and create a specific directory (/app) with symlinks to the app (the actual
-  # app, not the wrapper script) and its config -- the users of this container image may then use bind mount to
-  # swap the configuration file.
+  # In this case we're just being fancy and create a specific, predictable directory (/app) with symlinks to the
+  # app (the actual app, not the wrapper script) and its config -- the users of this container image may then use
+  # bind mount to swap the configuration file.
   enableFakechroot = true;
   fakeRootCommands = ''
     mkdir -p  /app

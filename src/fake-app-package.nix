@@ -1,8 +1,12 @@
 {
-  # Use system nixpkgs version as the starting point. If you want, you could pin it to a single commit using spell like
+  # Use system nixpkgs version as the starting point. If you want, you could force pin it to a single commit using
+  # spell like:
   #
   # let
-  #   pkgs = import (fetchTarball "https://github.com/NixOS/nixpkgs/archive/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz") {};
+  #   pkgs = fetchTarball {
+  #     url = "https://github.com/NixOS/nixpkgs/archive/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee.tar.gz";
+  #     hash = "sha256-00000000000000000000000000000000000000000000";
+  #   };
   # in
   #
   # ...but that shouldn't be required in this example.
@@ -25,17 +29,17 @@ pkgs.stdenvNoCC.mkDerivation rec {
   name = "fake-app";
   version = appVersion;
 
-  # Use current directory as the source, just for convenience
+  # Use the ./build/ directory as the source
   src = ./build;
 
   nativeBuildInputs = with pkgs; [
     # https://nixos.org/manual/nixpkgs/stable/#setup-hook-autopatchelfhook
     # https://wiki.nixos.org/wiki/Packaging/Binaries
-    # This hook will modify the target binary.
+    # This hook will modify the target binary, changing its hashes (if you care about these).
     autoPatchelfHook
 
-    #
-    #
+    # Script that creates a wrapper script for the actual binary
+    # See: https://github.com/NixOS/nixpkgs/blob/master/pkgs/build-support/setup-hooks/make-wrapper.sh
     makeWrapper
   ];
 
@@ -50,13 +54,13 @@ pkgs.stdenvNoCC.mkDerivation rec {
   # The autoPatchelfHook will update the rpath within the binary.
   dontBuild = true;
 
-  # Copy the files into the derivation build output directory, and then run various hooks
+  # Copy the files into the derivation build output directory, and then run various hooks. If the app did not read the
+  # config file we could just chuck the binary into `$out/bin/` and call it a day.
   # Docs: https://nixos.org/manual/nixpkgs/stable/#ssec-install-phase
   #
   # NOTE: Our fake application basically does `fopen("config-file.conf", "r")`, i.e. it requires the configuration
   # file to be in the current working directory. This derivation is also creating a wrapper script that will reset
-  # the working directory to the one in /nix/store - the wrapper script is optional. If the app did not read the
-  # config file we could just chuck the binaries into `$out/bin/` and call it a day.
+  # the working directory to the one in /nix/store, but the wrapper script is technically optional.
   installPhase = ''
     runHook preInstall
 
@@ -69,8 +73,8 @@ pkgs.stdenvNoCC.mkDerivation rec {
     chmod +x  "$out/libexec/${appBinary}"
 
     # Create the (optional-) wrapper script to make sure its working directory is set to the
-    # read-only `/nix/store/$something/libexec/` to let the app naively `fopen("config-file.conf", "r")` its
-    # placeholder configuration file.
+    # read-only `/nix/store/$something/libexec/` to let the app naively fopen() its placeholder configuration file.
+    #
     # NOTE: The "-wrapper" suffix is there just to help distinguish the two - it is not required.
     makeWrapper  "$out/libexec/${appBinary}"  "$out/bin/${appBinary}-wrapper"  --chdir $out/libexec/
 
@@ -81,14 +85,14 @@ pkgs.stdenvNoCC.mkDerivation rec {
     # Point it to the main binary within the $out/bin/ directory in case somebody wanted to do  [$] nix run [..]
     # This is not necessary for the derivation to function, but it may help out a bit.
     # Docs: https://nixos.org/manual/nixpkgs/stable/#var-meta-mainProgram
-    mainProgram = appBinary;
+    mainProgram = "${appBinary}-wrapper";
 
     # Mark that the binary was built outside of a Nix derivation. Not required to build the derivation.
     sourceProvenance = with lib.sourceTypes; [ binaryNativeCode ];
 
     # Mark the derivation as Unfree, and doing so will require the 'export NIXPKGS_ALLOW_UNFREE=1' environment
-    # variable to be set to build and run the derivation. Setting the license is not necessary for the derivation
-    # to be built, but since one of the assumptions of this example was that the application is non-public, we should
+    # variable to be set to build the derivation. Setting the license is not necessary for the derivation to be
+    # built, but since one of the assumptions of this example was that the application is non-public, we should
     # mark it so.
     # Docs: https://nixos.org/manual/nixpkgs/stable/#lib.licenses.unfree-unfree
     license = lib.licenses.unfree;

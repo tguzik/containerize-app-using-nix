@@ -62,7 +62,7 @@ void readFakeConfiguration() {
 
   char buf[1024];
   while (fgets(buf, sizeof(buf), fp) != NULL) {
-    printf("%s\n", buf);
+    printf("%s", buf);
   }
 
   printf(" ----\n\n");
