@@ -73,8 +73,6 @@ tasks:
 
   app:run:
     desc: Run the fake application to test that it works
-    deps:
-      - app:build
     cmds:
       - task: print-elf-info
         vars:
@@ -98,8 +96,6 @@ tasks:
     # Technically this step can be skipped - we could jump straight to building the container, however it allows us to
     # test out the derivation build before building the container, isolating problematic stage.
     desc: Uses Nix to package the application into a regular derivation, without producing a container yet.
-    deps:
-      - nix:copy-files
     env:
       # The placeholder application in this application is marked to have unfree license
       NIXPKGS_ALLOW_UNFREE: "1"
@@ -109,12 +105,19 @@ tasks:
 
   nix:app:run:
     desc: Print some information about the transformed binary and run it
-    deps:
-      - nix:app:derive
     vars:
-      LOCAL_WRAPPER_SCRIPT: "target/{{ .DERIVATION_APP_OUT_LINK }}/bin/{{ .APP_BINARY_NAME }}-wrapper"
-      LOCAL_BINARY_IN_LIBEXEC: "target/{{ .DERIVATION_APP_OUT_LINK }}/libexec/{{ .APP_BINARY_NAME }}"
+      LOCAL_DERIVATION: "target/{{ .DERIVATION_APP_OUT_LINK }}"
+      LOCAL_WRAPPER_SCRIPT: "{{ .LOCAL_DERIVATION }}/bin/{{ .APP_BINARY_NAME }}-wrapper"
+      LOCAL_BINARY_IN_LIBEXEC: "{{ .LOCAL_DERIVATION }}/libexec/{{ .APP_BINARY_NAME }}"
     cmds:
+      - silent: true
+        cmd: echo -e "\nClosure linked by {{ .LOCAL_DERIVATION }} has following contents:"
+
+      - cmd: nix path-info --pretty --human-readable --recursive --closure-size {{ .LOCAL_DERIVATION | shellQuote }}
+
+      - silent: true
+        cmd: echo -e " ---- \n"
+
       - task: print-elf-info
         vars:
           ELF_BINARY: "{{ .LOCAL_BINARY_IN_LIBEXEC }}"
@@ -129,8 +132,6 @@ tasks:
 
   nix:container:derive:
     desc: Use Nix to package the application into a container image.
-    deps:
-      - nix:copy-files
     env:
       # The placeholder application in this application is marked to have unfree license
       NIXPKGS_ALLOW_UNFREE: "1"
@@ -140,8 +141,6 @@ tasks:
 
   nix:container:run:
     desc: Load the container image, run it and remove it from local storage afterwards
-    deps:
-      - nix:container:derive
     vars:
       CONTAINER_ID: "{{ .APP_CONTAINER_NAME }}:{{ .APP_VERSION }}"
     cmds:
