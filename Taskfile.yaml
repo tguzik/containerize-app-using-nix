@@ -148,6 +148,7 @@ tasks:
       - defer: podman image rm  {{ .CONTAINER_ID | shellQuote}}
       - cmd: podman images  {{ .APP_CONTAINER_NAME | shellQuote }}
       - cmd: podman run -it --rm  {{ .CONTAINER_ID }}
+      - cmd: podman run -it --rm  {{ .CONTAINER_ID }} -- 'ls -lah /app'
 
   print-elf-info:
     internal: true
