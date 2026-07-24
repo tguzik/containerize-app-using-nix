@@ -11,7 +11,7 @@
 let
   # The derivation defined in the other file. We could inline the configuration into this file (yay for Nix being a
   # pure functional language), but to lower the cognitive complexity we'll just import it from the other file.
-  derivationWithApplication = pkgs.callPackage ./fake-app-package.nix {
+  derivationWithApplication = pkgs.callPackage ./stage1-derivation-with-the-app.nix {
     inherit appVersion;
     inherit appBinary;
     inherit appConfigFile;

@@ -101,7 +101,7 @@ tasks:
       NIXPKGS_ALLOW_UNFREE: "1"
     dir: target/
     cmds:
-      - cmd: nix-build  {{ .NIX_BUILD_FLAGS }}  fake-app-package.nix  --out-link {{ .DERIVATION_APP_OUT_LINK | shellQuote }}
+      - cmd: nix-build  {{ .NIX_BUILD_FLAGS }}  stage1-derivation-with-the-app.nix  --out-link {{ .DERIVATION_APP_OUT_LINK | shellQuote }}
 
   nix:app:run:
     desc: Print some information about the transformed binary and run it
@@ -137,7 +137,7 @@ tasks:
       NIXPKGS_ALLOW_UNFREE: "1"
     dir: target/
     cmds:
-      - cmd: nix-build  {{ .NIX_BUILD_FLAGS }}  containerize-app-package.nix  --out-link {{ .DERIVATION_CONTAINER_OUT_LINK | shellQuote }}
+      - cmd: nix-build  {{ .NIX_BUILD_FLAGS }}  stage2-derivation-building-container.nix  --out-link {{ .DERIVATION_CONTAINER_OUT_LINK | shellQuote }}
 
   nix:container:run:
     desc: Load the container image, run it and remove it from local storage afterwards
@@ -148,7 +148,7 @@ tasks:
       - defer: podman image rm  {{ .CONTAINER_ID | shellQuote}}
       - cmd: podman images  {{ .APP_CONTAINER_NAME | shellQuote }}
       - cmd: podman run -it --rm  {{ .CONTAINER_ID }}
-      - cmd: podman run -it --rm  {{ .CONTAINER_ID }} -- 'ls -lah /app'
+      - cmd: podman run -it --rm  {{ .CONTAINER_ID }} ls -lah /app
 
   print-elf-info:
     internal: true
