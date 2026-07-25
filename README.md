@@ -6,7 +6,8 @@ application can be virtually anything:
 * Your own app that you would like to run on:
   * operating systems that are not NixOS,
   * in a Dockerswarm,
-  * in a Kubernetes cluster, or
+  * in a Kubernetes cluster,
+  * or even on your consumer-grade NAS (Synology, QNAP etc.).
 * Open-Source application that you would like to run in its own sandbox[^1][^2], or
 * Application that requires secrets that need to be swapped at runtime or that vary in different environments[^3].
 * Proprietary application that cannot be shared with public due to license and/or other agreements.
