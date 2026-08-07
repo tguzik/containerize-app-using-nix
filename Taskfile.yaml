@@ -41,6 +41,7 @@ tasks:
       - task: app:run
       - task: nix:copy-files
       - task: nix:app:derive
+      - task: nix:app:sbom
       - task: nix:app:run
       - task: nix:container:derive
       - task: nix:container:run
@@ -102,6 +103,19 @@ tasks:
     dir: target/
     cmds:
       - cmd: nix-build  {{ .NIX_BUILD_FLAGS }}  stage1-derivation-with-the-app.nix  --out-link {{ .DERIVATION_APP_OUT_LINK | shellQuote }}
+
+  nix:app:sbom:
+    # This step can be skipped if you do not need to generate Software-Bill-Of-Materials file
+    desc: Generate SBOM of the application's derivation
+    cmds:
+      - cmd: mkdir -p target/sbom/
+      - cmd: cd target/sbom/ && sbomnix ../{{ .DERIVATION_APP_OUT_LINK | shellQuote }}
+      - cmd: echo "::group::Contents of sbom.cdx.json"
+      - cmd: cat target/sbom/sbom.cdx.json
+      - cmd: echo "::endgroup::"
+      - cmd: echo "::group::Contents of sbom.spdx.json"
+      - cmd: cat target/sbom/sbom.spdx.json
+      - cmd: echo "::endgroup::"
 
   nix:app:run:
     desc: Print some information about the transformed binary and run it
