@@ -17,8 +17,9 @@
   # https://search.nixos.org/packages
   packages = with pkgs; [
     git
-    go-task
     gnupg
+    go-task # https://taskfile.dev/ # Task runner / simpler Make alternative written in Go
+    sbomnix # https://github.com/tiiuae/sbomnix # Utilities to help with software supply chain challenges on nix targets
 
     # Tooling to for the compilation of the simulated native application
     gcc # https://gcc.gnu.org/ # GNU Compiler Collection
