@@ -110,12 +110,14 @@ tasks:
     cmds:
       - cmd: mkdir -p target/sbom/
       - cmd: cd target/sbom/ && sbomnix ../{{ .DERIVATION_APP_OUT_LINK | shellQuote }}
-      - cmd: echo "::group::Contents of sbom.cdx.json"
-      - cmd: cat target/sbom/sbom.cdx.json
-      - cmd: echo "::endgroup::"
-      - cmd: echo "::group::Contents of sbom.spdx.json"
-      - cmd: cat target/sbom/sbom.spdx.json
-      - cmd: echo "::endgroup::"
+      - silent: true
+        cmd: |
+          echo "::group::Contents of sbom.cdx.json"
+          cat target/sbom/sbom.cdx.json
+          echo "::endgroup::"
+          echo "::group::Contents of sbom.spdx.json"
+          cat target/sbom/sbom.cdx.json
+          echo "::endgroup::"
 
   nix:app:run:
     desc: Print some information about the transformed binary and run it
