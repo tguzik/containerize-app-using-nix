@@ -79,11 +79,6 @@ tasks:
         vars:
           ELF_BINARY: "target/build/{{ .APP_BINARY_NAME }}"
 
-      - silent: true
-        cmd: |
-          echo " ---- "
-          echo 'Switching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
-
       - cmd: cd target/build/ && ./{{ .APP_BINARY_NAME | shellQuote }}
 
   nix:copy-files:
