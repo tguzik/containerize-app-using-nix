@@ -80,7 +80,9 @@ tasks:
           ELF_BINARY: "target/build/{{ .APP_BINARY_NAME }}"
 
       - silent: true
-        cmd: echo -e ' ---- \nSwitching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
+        cmd: |
+          echo " ---- "
+          echo 'Switching working directory to "target/build/" and running "{{ .APP_BINARY_NAME }}"...'
 
       - cmd: cd target/build/ && ./{{ .APP_BINARY_NAME | shellQuote }}
 
@@ -112,11 +114,14 @@ tasks:
       - cmd: cd target/sbom/ && sbomnix ../{{ .DERIVATION_APP_OUT_LINK | shellQuote }}
       - silent: true
         cmd: |
+          echo
           echo "::group::Contents of sbom.cdx.json"
           cat target/sbom/sbom.cdx.json
+          echo
           echo "::endgroup::"
           echo "::group::Contents of sbom.spdx.json"
           cat target/sbom/sbom.cdx.json
+          echo
           echo "::endgroup::"
 
   nix:app:run:
@@ -127,13 +132,12 @@ tasks:
       LOCAL_BINARY_IN_LIBEXEC: "{{ .LOCAL_DERIVATION }}/libexec/{{ .APP_BINARY_NAME }}"
     cmds:
       - silent: true
-        cmd: echo -e "\nClosure linked by {{ .LOCAL_DERIVATION }} has following contents:"
+        cmd: |
+          echo
+          echo "::group::Debug information"
+          echo "Closure linked by {{ .LOCAL_DERIVATION }} has following contents:"
 
       - cmd: nix path-info --pretty --human-readable --recursive --closure-size {{ .LOCAL_DERIVATION | shellQuote }}
-
-      - silent: true
-        cmd: echo -e " ---- \n"
-
       - task: print-elf-info
         vars:
           ELF_BINARY: "{{ .LOCAL_BINARY_IN_LIBEXEC }}"
@@ -142,9 +146,11 @@ tasks:
         cmd: echo -e ' ---- \nRunning the wrapper results in:'
 
       - cmd: ./{{ .LOCAL_WRAPPER_SCRIPT | shellQuote }}
-
       - silent: true
-        cmd: echo " ---- "
+        cmd: |
+          echo
+          echo " ---- "
+          echo "::endgroup::"
 
   nix:container:derive:
     desc: Use Nix to package the application into a container image.
@@ -161,7 +167,7 @@ tasks:
       CONTAINER_ID: "{{ .APP_CONTAINER_NAME }}:{{ .APP_VERSION }}"
     cmds:
       - cmd: podman load --input target/{{ .DERIVATION_CONTAINER_OUT_LINK | shellQuote }}
-      - defer: podman image rm  {{ .CONTAINER_ID | shellQuote}}
+      - defer: podman image rm  {{ .CONTAINER_ID | shellQuote }}
       - cmd: podman images  {{ .APP_CONTAINER_NAME | shellQuote }}
       - cmd: podman run -it --rm  {{ .CONTAINER_ID }}
       - cmd: podman run -it --rm  {{ .CONTAINER_ID }} ls -lah /app
@@ -181,11 +187,15 @@ tasks:
         msg: The ELF binary at '{{ .ELF_BINARY }}' does not exist.
     cmds:
       - cmd: |
+          echo
+          echo "::group::Details about ELF binary"
           echo "Binary: {{ .ELF_BINARY }}"
           echo "Static linking information:"
           ldd {{ .ELF_BINARY | shellQuote }}
           echo
           echo "Dynamic section:"
           readelf --lint --dynamic  {{ .ELF_BINARY | shellQuote }}
+          echo
+          echo "::endgroup::"
 
 # eof
