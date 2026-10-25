@@ -2,8 +2,10 @@
 ---
 inputs:
   nixpkgs:
-    url: github:cachix/devenv-nixpkgs/rolling
+    # Pinning to specific commit is done through lockfile, which is why this line can contain just the tag name
+    url: github:nixos/nixpkgs?ref=nixos-26.05
   git-hooks:
+    # Pinning to specific commit is done through lockfile, which is why this line can contain just the tag name
     url: github:cachix/git-hooks.nix
 
 # eof

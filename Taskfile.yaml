@@ -164,8 +164,8 @@ tasks:
       - cmd: podman load --input target/{{ .DERIVATION_CONTAINER_OUT_LINK | shellQuote }}
       - defer: podman image rm  {{ .CONTAINER_ID | shellQuote }}
       - cmd: podman images  {{ .APP_CONTAINER_NAME | shellQuote }}
-      - cmd: podman run -it --rm  {{ .CONTAINER_ID }}
-      - cmd: podman run -it --rm  {{ .CONTAINER_ID }} ls -lah /app
+      - cmd: podman run --rm  {{ .CONTAINER_ID }}
+      - cmd: podman run --rm  {{ .CONTAINER_ID }} ls -lah /app
 
   print-elf-info:
     internal: true

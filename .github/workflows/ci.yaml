@@ -30,22 +30,16 @@ jobs:
           nix_path: nixpkgs=channel:nixos-26.05
 
       - name: Print nixpkgs version
-        run: |
-          nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version'
+        run: nix-instantiate --eval -E '(import <nixpkgs> {}).lib.version'
 
       - name: Install DevEnv
-        env:
-          LOCAL_DEVENV_REVISION: ea3d94ac9d6bf6a1313773170122ca4e2ef5a0be # https://github.com/cachix/devenv/releases/tag/v2.1.2
-        run: |
-          nix profile add "github:cachix/devenv/${LOCAL_DEVENV_REVISION}" --accept-flake-config --option extra-substituters "https://devenv.cachix.org?trusted=true&priority=3"
+        run: nix profile add nixpkgs#devenv
 
       - name: Run devenv test
-        run: |
-          devenv test
+        run: devenv test
 
       - name: Run tasks
         shell: devenv --profile github-actions shell bash -- -e {0}
-        run: |
-          task ci
+        run: task ci
 
 # eof
